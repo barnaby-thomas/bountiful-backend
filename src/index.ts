@@ -17,7 +17,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/', (req, res) => {
     res.json({ message: 'Bountiful API is running' });
@@ -45,6 +45,31 @@ app.get('/plants/:id', async (req, res) => {
     } catch (error) {
         console.error('Error fetching plant:', error);
         res.status(500).json({ error: 'Failed to fetch plant' });
+    }
+});
+
+app.post('/identify', async (req, res) => {
+    /* function to send user's image from camera to plant.id API and return species name */
+    try {
+        const { image } = req.body;
+
+        const response = await fetch('https://api.plant.id/v3/identification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Api-Key': process.env.PLANT_API_KEY || '',
+            },
+            body: JSON.stringify({
+                images: [image],
+                classification_level: 'species',
+            }),
+        });
+
+        const result = await response.json();
+        res.json(result);
+    } catch (error) {
+        console.error('Plant identification error', error);
+        res.status(500).json({ error: "Couldn't identify plant" });
     }
 });
 
