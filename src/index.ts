@@ -25,7 +25,7 @@ app.get('/', (req, res) => {
 
 app.get('/plants', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM plants');
+        const result = await pool.query('SELECT * FROM plants ORDER BY name ASC');
         res.json(result.rows);
     } catch (error) {
         console.error('Error fetching plants:', error);
