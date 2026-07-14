@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -72,6 +74,22 @@ app.post('/identify', async (req, res) => {
         res.status(500).json({ error: "Couldn't identify plant" });
     }
 });
+
+app.post('/register', async (req, res) => {
+    /* takes users registration details, hashes the password, saves user info to db, and returns registration details */
+    try{
+        const {email, password, username} = req.body;
+        const passwordHash = await bcrypt.hash(password, 10);
+        const result = await pool.query(
+            'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username',
+            [email, passwordHash, username]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ error: 'Registration failed' });
+    }
+})
 
 pool.query('SELECT NOW()', (err: Error | null, res: any) => {
     if (err) {
