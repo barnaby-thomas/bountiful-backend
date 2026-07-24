@@ -111,7 +111,7 @@ app.post('/login', async (req, res) => {
 
         const token = jwt.sign(
             { userId: user.id },
-            process.env.JWT_SECRET || '',
+            process.env.JWT_SECRET_KEY || '',
             { expiresIn: '7d' }
         );
         
