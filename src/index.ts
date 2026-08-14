@@ -176,6 +176,21 @@ app.get('/plants/latin/:latinName', async (req, res) => {
     }
 });
 
+//Add unlocked plants
+app.post('/unlock', async (req, res) => {
+    try {
+        const { userId, plantId } = req.body;
+        const result = await pool.query(
+            'INSERT INTO unlocked_plants (user_id, plant_id) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *',
+            [userId, plantId]
+        );
+        res.status(201).json(result.rows[0] || { message: 'Already unlocked' });
+    } catch (error) {
+        console.error('Error unlocking plant:', error);
+        res.status(500).json({ error: 'Failed to unlock plant' });
+    }
+});
+
 pool.query('SELECT NOW()', (err: Error | null, res: any) => {
     if (err) {
         console.error('Database connection error:', err);
