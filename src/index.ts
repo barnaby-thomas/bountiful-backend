@@ -130,10 +130,10 @@ app.post('/login', async (req, res) => {
 // Save a user's foraging spot to the database
 app.post('/spots', async (req, res) => {
     try {
-        const { userId, latitude, longitude, notes } = req.body;
+        const { userId, latitude, longitude, notes, plantId } = req.body;
         const result = await pool.query(
-            'INSERT INTO foraging_spots (user_id, latitude, longitude, notes) VALUES ($1, $2, $3, $4) RETURNING *',
-            [userId, latitude, longitude, notes]
+            'INSERT INTO foraging_spots (user_id, latitude, longitude, notes, plant_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [userId, latitude, longitude, notes, plantId || null]
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
@@ -147,7 +147,10 @@ app.get('/spots/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         const result = await pool.query(
-            'SELECT * FROM foraging_spots WHERE user_id = $1',
+            `SELECT fs.*, p.name as plant_name 
+             FROM foraging_spots fs
+             LEFT JOIN plants p ON fs.plant_id = p.id
+             WHERE fs.user_id = $1`,
             [userId]
         );
         res.json(result.rows);
