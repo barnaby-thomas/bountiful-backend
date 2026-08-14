@@ -77,8 +77,12 @@ app.post('/identify', async (req, res) => {
 
 app.post('/register', async (req, res) => {
     /* takes users registration details, hashes the password, saves user info to db, and returns registration details */
+    
     try{
         const {email, password, username} = req.body;
+        if (!email || !password || !username) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
         const passwordHash = await bcrypt.hash(password, 10);
         const result = await pool.query(
             'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username',
@@ -122,6 +126,36 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ error: 'Login failed'})
     }
 })
+
+// Save a user's foraging spot to the database
+app.post('/spots', async (req, res) => {
+    try {
+        const { userId, latitude, longitude, notes } = req.body;
+        const result = await pool.query(
+            'INSERT INTO foraging_spots (user_id, latitude, longitude, notes) VALUES ($1, $2, $3, $4) RETURNING *',
+            [userId, latitude, longitude, notes]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Error saving spot:', error);
+        res.status(500).json({ error: 'Failed to save spot' });
+    }
+});
+
+// Retrieve a user's logged foraging spots
+app.get('/spots/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const result = await pool.query(
+            'SELECT * FROM foraging_spots WHERE user_id = $1',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error fetching spots:', error);
+        res.status(500).json({ error: 'Failed to fetch spots' });
+    }
+});
 
 pool.query('SELECT NOW()', (err: Error | null, res: any) => {
     if (err) {
