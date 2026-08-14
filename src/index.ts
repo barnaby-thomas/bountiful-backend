@@ -157,6 +157,25 @@ app.get('/spots/:userId', async (req, res) => {
     }
 });
 
+// Find plant by latin name
+app.get('/plants/latin/:latinName', async (req, res) => {
+    try {
+        const { latinName } = req.params;
+        const result = await pool.query(
+            'SELECT * FROM plants WHERE latin_name ILIKE $1',
+            [latinName]
+        );
+        if (result.rows.length === 0) {
+            res.status(404).json({ error: 'Plant not in database' });
+        } else {
+            res.json(result.rows[0]);
+        }
+    } catch (error) {
+        console.error('Error finding plant:', error);
+        res.status(500).json({ error: "Couldn't find plant" });
+    }
+});
+
 pool.query('SELECT NOW()', (err: Error | null, res: any) => {
     if (err) {
         console.error('Database connection error:', err);
